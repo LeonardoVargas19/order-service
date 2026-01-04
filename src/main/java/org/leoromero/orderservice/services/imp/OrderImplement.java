@@ -8,10 +8,8 @@ import org.leoromero.orderservice.respositorie.OrderRepository;
 import org.leoromero.orderservice.services.OrderServices;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +38,7 @@ public class OrderImplement implements OrderServices {
                 .toList();
 
         InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
-                .uri("http://localhost:8080/api/product/stock",
+                .uri("http://product-services/api/product/stock",
                         uriBuilder -> uriBuilder.queryParam("skuCode", skuCoder).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
