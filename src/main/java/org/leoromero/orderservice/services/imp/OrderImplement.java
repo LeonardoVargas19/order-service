@@ -8,6 +8,7 @@ import org.leoromero.orderservice.respositorie.OrderRepository;
 import org.leoromero.orderservice.services.OrderServices;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,10 +37,16 @@ public class OrderImplement implements OrderServices {
         List<String> skuCoder = order.getOrderLineItems().stream()
                 .map(OrderLineItems::getSkuCode)
                 .toList();
+        /*
+
+          aquí llamo a al servicio produc que a su ves me devuelve los datos de la BD
+         */
+
 
         InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
                 .uri("http://product-services/api/product/stock",
-                        uriBuilder -> uriBuilder.queryParam("skuCode", skuCoder).build())
+                        uriBuilder -> uriBuilder
+                                .queryParam("skuCode", skuCoder).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
@@ -52,6 +59,14 @@ public class OrderImplement implements OrderServices {
 
         if (inventoryResponses.length != skuCoder.size()) {
             throw new IllegalArgumentException("Algunos productos no fueron encontrados");
+        }
+        for (OrderLineItems items : order.getOrderLineItems()) {
+            Arrays.stream(inventoryResponses)
+                    .filter(sku -> items.getSkuCode().equals(sku.getSku()))
+                    .findFirst()
+                    .ifPresent(element -> items.setPrice(element.getPrices()));
+
+
         }
 
         boolean allProductStock = Arrays.stream(inventoryResponses)
