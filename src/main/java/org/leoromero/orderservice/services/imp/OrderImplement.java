@@ -1,5 +1,6 @@
 package org.leoromero.orderservice.services.imp;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import org.leoromero.orderservice.model.Order;
 import org.leoromero.orderservice.model.OrderLineItems;
@@ -32,6 +33,7 @@ public class OrderImplement implements OrderServices {
 
     }
 
+    @CircuitBreaker(name = "inventory", fallbackMethod = "fallbackApp")
     @Override
     public Order createOrder(Order order) {
         List<String> skuCoder = order.getOrderLineItems().stream()
@@ -91,4 +93,10 @@ public class OrderImplement implements OrderServices {
         //TODO CREAR LOGICA DE EXIST
         return null;
     }
+
+    public Order fallbackApp(Order order, Throwable throwable) {
+        throw new RuntimeException("Oops! El servicio de inventario no responde. Intenta más tarde.");
+    }
+
+
 }
