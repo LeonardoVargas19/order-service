@@ -2,7 +2,6 @@ package org.leoromero.orderservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.leoromero.orderservice.model.Order;
-import org.leoromero.orderservice.respositorie.OrderRepository;
 import org.leoromero.orderservice.services.OrderServices;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

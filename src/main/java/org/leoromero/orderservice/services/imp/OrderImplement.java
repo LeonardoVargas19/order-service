@@ -2,22 +2,28 @@ package org.leoromero.orderservice.services.imp;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.leoromero.orderservice.model.Order;
 import org.leoromero.orderservice.model.OrderLineItems;
 import org.leoromero.orderservice.model.dto.InventoryResponse;
+import org.leoromero.orderservice.model.dto.OrderPlacedEvent;
 import org.leoromero.orderservice.respositorie.OrderRepository;
 import org.leoromero.orderservice.services.OrderServices;
+
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderImplement implements OrderServices {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
 
     @Override
@@ -75,7 +81,12 @@ public class OrderImplement implements OrderServices {
                 .allMatch(InventoryResponse::getIsInStock);
 
         if (allProductStock) {
+
+                kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+
+            log.info("NOTIFICACIÓN ENVIADA A KAFKA PARA LA ORDEN: {}", order.getOrderNumber());
             return orderRepository.save(order);
+
         } else {
             throw new IllegalArgumentException("El producto no esta en stock, intente mas tarde");
         }
@@ -94,9 +105,6 @@ public class OrderImplement implements OrderServices {
         return null;
     }
 
-    public Order fallbackApp(Order order, Throwable throwable) {
-        throw new RuntimeException("Oops! El servicio de inventario no responde. Intenta más tarde.");
-    }
 
 
 }
